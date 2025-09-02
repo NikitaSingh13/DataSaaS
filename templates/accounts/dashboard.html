@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - DataSaaS{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <!-- Welcome Section -->
+  <div class="mb-8">
+    <h1 class="text-4xl font-bold mb-2">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+    <p class="text-base-content/70">Upload and analyze your CSV or Excel files to get instant insights.</p>
+  </div>
+
+  <!-- Upload Section -->
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <h2 class="card-title text-2xl mb-4">
+        <i class="fas fa-upload text-primary"></i>
+        Upload Your Data
+      </h2>
+      
+      <div class="border-2 border-dashed border-base-300 rounded-lg p-8 text-center hover:border-primary transition-colors">
+        <div class="space-y-4">
+          <div class="text-6xl text-base-content/30">
+            <i class="fas fa-cloud-upload-alt"></i>
+          </div>
+          <div>
+            <h3 class="text-xl font-semibold mb-2">Drag and drop your files here</h3>
+            <p class="text-base-content/70">Supports CSV, Excel (.xlsx, .xls) files up to 100MB</p>
+          </div>
+          <div>
+            <button class="btn btn-primary">
+              <i class="fas fa-folder-open mr-2"></i>
+              Browse Files
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Analytics Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Stats Cards -->
+    <div class="stat bg-base-100 shadow-xl rounded-lg">
+      <div class="stat-figure text-primary">
+        <i class="fas fa-file-alt text-2xl"></i>
+      </div>
+      <div class="stat-title">Files Analyzed</div>
+      <div class="stat-value text-primary">0</div>
+      <div class="stat-desc">This month</div>
+    </div>
+
+    <div class="stat bg-base-100 shadow-xl rounded-lg">
+      <div class="stat-figure text-secondary">
+        <i class="fas fa-chart-line text-2xl"></i>
+      </div>
+      <div class="stat-title">Insights Generated</div>
+      <div class="stat-value text-secondary">0</div>
+      <div class="stat-desc">Total insights</div>
+    </div>
+
+    <div class="stat bg-base-100 shadow-xl rounded-lg">
+      <div class="stat-figure text-accent">
+        <i class="fas fa-download text-2xl"></i>
+      </div>
+      <div class="stat-title">Reports Downloaded</div>
+      <div class="stat-value text-accent">0</div>
+      <div class="stat-desc">All time</div>
+    </div>
+  </div>
+
+  <!-- Recent Files Section -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="card-title text-2xl">
+          <i class="fas fa-history text-primary"></i>
+          Recent Files
+        </h2>
+        <button class="btn btn-outline btn-sm">View All</button>
+      </div>
+      
+      <!-- Empty State -->
+      <div class="text-center py-12">
+        <div class="text-6xl text-base-content/20 mb-4">
+          <i class="fas fa-inbox"></i>
+        </div>
+        <h3 class="text-xl font-semibold mb-2">No files analyzed yet</h3>
+        <p class="text-base-content/70 mb-4">Upload your first CSV or Excel file to get started with data analysis.</p>
+        <button class="btn btn-primary">
+          <i class="fas fa-plus mr-2"></i>
+          Upload Your First File
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+    <div class="card bg-gradient-to-br from-primary to-primary-focus text-primary-content shadow-xl">
+      <div class="card-body text-center">
+        <i class="fas fa-chart-pie text-3xl mb-2"></i>
+        <h3 class="font-bold">Quick Analysis</h3>
+        <p class="text-sm opacity-80">Get instant insights</p>
+      </div>
+    </div>
+
+    <div class="card bg-gradient-to-br from-secondary to-secondary-focus text-secondary-content shadow-xl">
+      <div class="card-body text-center">
+        <i class="fas fa-table text-3xl mb-2"></i>
+        <h3 class="font-bold">Data Preview</h3>
+        <p class="text-sm opacity-80">View your data</p>
+      </div>
+    </div>
+
+    <div class="card bg-gradient-to-br from-accent to-accent-focus text-accent-content shadow-xl">
+      <div class="card-body text-center">
+        <i class="fas fa-file-export text-3xl mb-2"></i>
+        <h3 class="font-bold">Export Data</h3>
+        <p class="text-sm opacity-80">Download results</p>
+      </div>
+    </div>
+
+    <div class="card bg-gradient-to-br from-success to-success-focus text-success-content shadow-xl">
+      <div class="card-body text-center">
+        <i class="fas fa-cog text-3xl mb-2"></i>
+        <h3 class="font-bold">Settings</h3>
+        <p class="text-sm opacity-80">Customize analysis</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

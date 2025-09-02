@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - DataSaaS{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
+  <div class="card w-full max-w-md shadow-2xl bg-base-100">
+    <div class="card-body">
+      <!-- Header -->
+      <div class="text-center mb-6">
+        <h2 class="text-3xl font-bold text-primary">Welcome Back</h2>
+        <p class="text-base-content/70 mt-2">Sign in to your DataSaaS account</p>
+      </div>
+
+      <!-- Error Messages -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-error mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <!-- Login Form -->
+      <form method="post" class="space-y-4">
+        {% csrf_token %}
+        
+        <!-- Username Field -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-medium">Username or Email</span>
+          </label>
+          <div class="relative">
+            <input type="text" 
+                   name="username" 
+                   placeholder="Enter your username or email" 
+                   class="input input-bordered w-full pl-10" 
+                   required>
+            <i class="fas fa-user absolute left-3 top-3 text-base-content/50"></i>
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-medium">Password</span>
+          </label>
+          <div class="relative">
+            <input type="password" 
+                   name="password" 
+                   placeholder="Enter your password" 
+                   class="input input-bordered w-full pl-10" 
+                   required>
+            <i class="fas fa-lock absolute left-3 top-3 text-base-content/50"></i>
+          </div>
+        </div>
+
+        <!-- Remember Me & Forgot Password -->
+        <div class="flex justify-between items-center">
+          <label class="label cursor-pointer">
+            <input type="checkbox" name="remember_me" class="checkbox checkbox-primary" />
+            <span class="label-text ml-2">Remember me</span>
+          </label>
+          <a href="#" class="link link-primary text-sm">Forgot password?</a>
+        </div>
+
+        <!-- Login Button -->
+        <div class="form-control mt-6">
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fas fa-sign-in-alt mr-2"></i>
+            Sign In
+          </button>
+        </div>
+      </form>
+
+      <!-- Divider - COMMENTED OUT SOCIAL LOGIN -->
+      <!-- <div class="divider">OR</div> -->
+
+      <!-- Social Login - COMMENTED OUT ALLAUTH -->
+      <!-- <div class="space-y-3">
+        <button class="btn btn-outline btn-block">
+          <i class="fab fa-google mr-2"></i>
+          Continue with Google
+        </button>
+        <button class="btn btn-outline btn-block">
+          <i class="fab fa-github mr-2"></i>
+          Continue with GitHub
+        </button>
+      </div> -->
+
+      <!-- Sign Up Link -->
+      <div class="text-center mt-6">
+        <p class="text-base-content/70">
+          Don't have an account? 
+          <a href="{% url 'signup' %}" class="link link-primary font-medium">Sign up for free</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
