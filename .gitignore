@@ -286,3 +286,7 @@ Pipfile.lock
 *.crt
 *.pem
 *.p12
+
+
+.env
+db.sqlite3
