@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}ML Results - {{ ml_job.target_column }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                            <i class="fas fa-trophy mr-3 text-indigo-600"></i>
+                            ML Training Results
+                        </h1>
+                        <p class="text-gray-600">Target: <span class="font-semibold text-indigo-600">{{ target_column }}</span> | 
+                           Type: <span class="font-semibold text-purple-600">{{ problem_type|title }}</span></p>
+                    </div>
+                    <div class="hidden lg:block">
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-indigo-600">{{ best_model.name|title }}</div>
+                                <div class="text-sm text-gray-500">Best Model</div>
+                                <div class="text-lg font-semibold text-purple-600">
+                                    {% if problem_type == 'regression' %}
+                                        R² = {{ best_model.score|floatformat:3 }}
+                                    {% else %}
+                                        {{ best_model.score|floatformat:1 }}% Accuracy
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success Message -->
+            <div class="bg-green-50 border border-green-200 rounded-xl p-6 mb-8">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 text-2xl mr-4"></i>
+                    <div>
+                        <h3 class="text-lg font-semibold text-green-800">Training Completed Successfully!</h3>
+                        <p class="text-green-700">
+                            Trained 3 models with {{ preprocessing_info.sample_count }} samples and {{ preprocessing_info.feature_count }} features.
+                            {% if training_time %}
+                                Training took {{ training_time|floatformat:1 }} seconds.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Results -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-chart-bar mr-3 text-blue-600"></i>
+                    Model Performance Comparison
+                </h2>
+
+                {% if problem_type == 'regression' %}
+                <!-- Regression Results -->
+                <div class="overflow-x-auto">
+                    <table class="w-full table-auto">
+                        <thead>
+                            <tr class="bg-gradient-to-r from-blue-100 to-indigo-100">
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Model</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">RMSE</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">R² Score</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for model_name, results in model_results.items %}
+                            <tr class="border-b border-gray-200 hover:bg-gray-50 {% if model_name == best_model.name %}bg-green-50{% endif %}">
+                                <td class="px-4 py-3 font-medium text-gray-800">
+                                    {% if model_name == best_model.name %}
+                                        <i class="fas fa-crown text-yellow-500 mr-2"></i>
+                                    {% endif %}
+                                    {{ model_name|title }}
+                                </td>
+                                <td class="px-4 py-3 text-red-600 font-semibold">{{ results.rmse|floatformat:4 }}</td>
+                                <td class="px-4 py-3 text-blue-600 font-semibold">{{ results.r2|floatformat:4 }}</td>
+                                <td class="px-4 py-3">
+                                    {% if results.r2 > 0.8 %}
+                                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">Excellent</span>
+                                    {% elif results.r2 > 0.6 %}
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-semibold">Good</span>
+                                    {% elif results.r2 > 0.3 %}
+                                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm font-semibold">Fair</span>
+                                    {% else %}
+                                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-sm font-semibold">Poor</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <h4 class="font-semibold text-blue-800 mb-2">Understanding the Metrics:</h4>
+                    <div class="text-blue-700 text-sm space-y-1">
+                        <p><strong>RMSE (Root Mean Square Error):</strong> Lower values are better. Measures average prediction error.</p>
+                        <p><strong>R² (R-squared):</strong> Higher values are better (0-1). Measures how well the model explains the data variance.</p>
+                    </div>
+                </div>
+
+                {% else %}
+                <!-- Classification Results -->
+                <div class="overflow-x-auto">
+                    <table class="w-full table-auto">
+                        <thead>
+                            <tr class="bg-gradient-to-r from-green-100 to-blue-100">
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Model</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Accuracy</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for model_name, results in model_results.items %}
+                            <tr class="border-b border-gray-200 hover:bg-gray-50 {% if model_name == best_model.name %}bg-green-50{% endif %}">
+                                <td class="px-4 py-3 font-medium text-gray-800">
+                                    {% if model_name == best_model.name %}
+                                        <i class="fas fa-crown text-yellow-500 mr-2"></i>
+                                    {% endif %}
+                                    {{ model_name|title }}
+                                </td>
+                                <td class="px-4 py-3 text-green-600 font-semibold">{{ results.accuracy|floatformat:1 }}%</td>
+                                <td class="px-4 py-3">
+                                    {% if results.accuracy > 0.9 %}
+                                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">Excellent</span>
+                                    {% elif results.accuracy > 0.8 %}
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-semibold">Good</span>
+                                    {% elif results.accuracy > 0.7 %}
+                                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm font-semibold">Fair</span>
+                                    {% else %}
+                                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded text-sm font-semibold">Poor</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-4 p-4 bg-green-50 rounded-lg">
+                    <h4 class="font-semibold text-green-800 mb-2">Understanding the Metrics:</h4>
+                    <div class="text-green-700 text-sm">
+                        <p><strong>Accuracy:</strong> Percentage of correct predictions. Higher values are better.</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Visualizations -->
+            {% if plot_paths %}
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-chart-line mr-3 text-purple-600"></i>
+                    Model Visualizations
+                </h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {% for plot_name, plot_path in plot_paths.items %}
+                    <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6 shadow-md">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">
+                            {{ plot_name|title|replace:"_ " }}
+                        </h3>
+                        <div class="flex justify-center">
+                            <img src="/media/{{ plot_path }}" alt="{{ plot_name }}" 
+                                 class="max-w-full h-auto rounded-lg shadow-lg border border-gray-200">
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Preprocessing Information -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-cogs mr-3 text-orange-600"></i>
+                    Data Preprocessing Summary
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div class="text-center bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-600 mb-2">{{ preprocessing_info.sample_count }}</div>
+                        <div class="text-gray-600 text-sm">Final Samples</div>
+                    </div>
+                    <div class="text-center bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-green-600 mb-2">{{ preprocessing_info.feature_count }}</div>
+                        <div class="text-gray-600 text-sm">Final Features</div>
+                    </div>
+                    <div class="text-center bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-purple-600 mb-2">{{ preprocessing_info.removed_columns|length }}</div>
+                        <div class="text-gray-600 text-sm">Removed Columns</div>
+                    </div>
+                    <div class="text-center bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
+                        <div class="text-2xl font-bold text-orange-600 mb-2">{{ preprocessing_info.steps|length }}</div>
+                        <div class="text-gray-600 text-sm">Processing Steps</div>
+                    </div>
+                </div>
+
+                <!-- Preprocessing Steps -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">Preprocessing Steps Applied:</h3>
+                    <ul class="space-y-2">
+                        {% for step in preprocessing_info.steps %}
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-green-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                            <span class="text-gray-700 text-sm">{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-center space-x-4">
+                <a href="{% url 'analytics:ml_jobs_list' %}" 
+                   class="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-md transition duration-300 flex items-center">
+                    <i class="fas fa-list mr-2"></i>
+                    All ML Jobs
+                </a>
+                <a href="{% url 'analytics:select_target_column' uploaded_file.id %}" 
+                   class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg shadow-md transition duration-300 flex items-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Train New Model
+                </a>
+                <a href="{% url 'accounts:dashboard' %}" 
+                   class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg shadow-md transition duration-300 flex items-center">
+                    <i class="fas fa-home mr-2"></i>
+                    Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table tbody tr:hover {
+    background-color: #f8fafc;
+}
+</style>
+{% endblock %}

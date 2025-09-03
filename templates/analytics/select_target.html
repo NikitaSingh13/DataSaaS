@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+
+{% block title %}Select Target Column - {{ uploaded_file.filename }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                            <i class="fas fa-bullseye mr-3 text-green-600"></i>
+                            Select Target Column
+                        </h1>
+                        <p class="text-gray-600">Choose the column you want to predict for: <span class="font-semibold text-green-600">{{ uploaded_file.filename }}</span></p>
+                    </div>
+                    <div class="hidden lg:block">
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <div class="flex items-center space-x-4">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-green-600">{{ total_rows }}</div>
+                                    <div class="text-sm text-gray-500">Rows</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-blue-600">{{ total_columns }}</div>
+                                    <div class="text-sm text-gray-500">Columns</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-info-circle mr-3 text-blue-600"></i>
+                    How to Choose a Target Column
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-blue-50 rounded-lg p-4">
+                        <h3 class="font-bold text-blue-800 mb-2">
+                            <i class="fas fa-chart-line mr-2"></i>For Regression (Predicting Numbers)
+                        </h3>
+                        <ul class="text-blue-700 text-sm space-y-1">
+                            <li>• Choose numeric columns with many unique values</li>
+                            <li>• Examples: Price, Age, Temperature, Sales</li>
+                            <li>• We'll use Linear Regression + Random Forest</li>
+                        </ul>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-4">
+                        <h3 class="font-bold text-green-800 mb-2">
+                            <i class="fas fa-tags mr-2"></i>For Classification (Predicting Categories)
+                        </h3>
+                        <ul class="text-green-700 text-sm space-y-1">
+                            <li>• Choose categorical or numeric columns with few unique values</li>
+                            <li>• Examples: Category, Status, Type, Rating (1-5)</li>
+                            <li>• We'll use Logistic Regression + Random Forest</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Selection Form -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-mouse-pointer mr-3 text-purple-600"></i>
+                    Choose Your Target Column
+                </h2>
+
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <label for="target_column" class="block text-lg font-semibold text-gray-700 mb-3">
+                                Select Target Column:
+                            </label>
+                            <select name="target_column" id="target_column" 
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-lg"
+                                    required onchange="updateColumnInfo()">
+                                <option value="">-- Choose a column --</option>
+                                {% for col in columns_info %}
+                                <option value="{{ col.name }}" 
+                                        data-dtype="{{ col.dtype }}"
+                                        data-unique="{{ col.unique_count }}"
+                                        data-nulls="{{ col.null_count }}"
+                                        data-numeric="{{ col.is_numeric }}"
+                                        data-samples="{{ col.sample_values|join:', ' }}">
+                                    {{ col.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div id="column-info" class="hidden">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-3">Column Information:</h3>
+                            <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Data Type:</span>
+                                    <span id="info-dtype" class="font-semibold"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Unique Values:</span>
+                                    <span id="info-unique" class="font-semibold"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Missing Values:</span>
+                                    <span id="info-nulls" class="font-semibold"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Predicted Problem:</span>
+                                    <span id="info-problem" class="font-semibold"></span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">Sample Values:</span>
+                                    <div id="info-samples" class="text-sm text-gray-700 mt-1"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center space-x-4 pt-6">
+                        <a href="{% url 'analytics:eda_view' uploaded_file.id %}" 
+                           class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg shadow-md transition duration-300 flex items-center">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Back to EDA
+                        </a>
+                        <button type="submit" 
+                                class="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg shadow-md transition duration-300 flex items-center"
+                                id="submit-btn" disabled>
+                            <i class="fas fa-rocket mr-2"></i>
+                            Start ML Training
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Column Overview -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-table mr-3 text-indigo-600"></i>
+                    All Columns Overview
+                </h2>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full table-auto">
+                        <thead>
+                            <tr class="bg-gradient-to-r from-indigo-100 to-purple-100">
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Column Name</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Data Type</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Unique Values</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Missing</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Suggested Use</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for col in columns_info %}
+                            <tr class="border-b border-gray-200 hover:bg-gray-50 cursor-pointer" 
+                                onclick="selectColumn('{{ col.name }}')">
+                                <td class="px-4 py-3 font-medium text-gray-800">{{ col.name }}</td>
+                                <td class="px-4 py-3">
+                                    <span class="px-2 py-1 rounded text-sm font-semibold
+                                        {% if col.is_numeric %}bg-blue-100 text-blue-800
+                                        {% else %}bg-purple-100 text-purple-800{% endif %}">
+                                        {{ col.dtype }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-gray-600">{{ col.unique_count }}</td>
+                                <td class="px-4 py-3">
+                                    {% if col.null_count > 0 %}
+                                        <span class="text-red-600 font-semibold">{{ col.null_count }}</span>
+                                    {% else %}
+                                        <span class="text-green-600 font-semibold">0</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3">
+                                    {% if col.is_numeric and col.unique_count > 20 %}
+                                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+                                            <i class="fas fa-chart-line mr-1"></i>Regression
+                                        </span>
+                                    {% else %}
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+                                            <i class="fas fa-tags mr-1"></i>Classification
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateColumnInfo() {
+    const select = document.getElementById('target_column');
+    const selectedOption = select.options[select.selectedIndex];
+    const infoDiv = document.getElementById('column-info');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    if (selectedOption.value) {
+        // Show column info
+        infoDiv.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50');
+        
+        // Update info
+        document.getElementById('info-dtype').textContent = selectedOption.dataset.dtype;
+        document.getElementById('info-unique').textContent = selectedOption.dataset.unique;
+        document.getElementById('info-nulls').textContent = selectedOption.dataset.nulls;
+        document.getElementById('info-samples').textContent = selectedOption.dataset.samples;
+        
+        // Determine problem type
+        const isNumeric = selectedOption.dataset.numeric === 'True';
+        const uniqueCount = parseInt(selectedOption.dataset.unique);
+        const problemType = (isNumeric && uniqueCount > 20) ? 'Regression' : 'Classification';
+        const problemElement = document.getElementById('info-problem');
+        problemElement.textContent = problemType;
+        problemElement.className = problemType === 'Regression' ? 
+            'font-semibold text-green-600' : 'font-semibold text-blue-600';
+    } else {
+        infoDiv.classList.add('hidden');
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50');
+    }
+}
+
+function selectColumn(columnName) {
+    const select = document.getElementById('target_column');
+    select.value = columnName;
+    updateColumnInfo();
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    updateColumnInfo();
+});
+</script>
+
+<style>
+.table tbody tr:hover {
+    background-color: #f8fafc;
+}
+</style>
+{% endblock %}

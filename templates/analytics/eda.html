@@ -233,7 +233,7 @@
           {% if "categorical_" in key %}
           <div class="card bg-base-200">
             <div class="card-body">
-              <h3 class="card-title">{{ key|title|replace:"_":" " }}</h3>
+              <h3 class="card-title">{{ key|title|replace:"_ " }}</h3>
               <img src="{{ MEDIA_URL }}{{ path }}" alt="{{ key }}" class="w-full rounded">
             </div>
           </div>

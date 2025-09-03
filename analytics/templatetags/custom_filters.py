@@ -16,10 +16,20 @@ def lookup(dictionary, key):
 def replace(value, arg):
     """
     Template filter to replace characters in strings
-    Usage: {{ value|replace:"_,:" }}
+    Usage: {{ value|replace:"_,:" }} or {{ value|replace:"_ " }}
     """
     if isinstance(value, str) and arg:
-        old, new = arg.split(',')
+        if ',' in arg:
+            # Format: "old,new"
+            old, new = arg.split(',', 1)
+        else:
+            # Format: "old new" (space-separated)
+            parts = arg.split(' ', 1)
+            if len(parts) == 2:
+                old, new = parts
+            else:
+                # Single argument - replace with space
+                old, new = arg, ' '
         return value.replace(old, new)
     return value
 

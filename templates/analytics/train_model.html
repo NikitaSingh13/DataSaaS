@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Training Model - {{ ml_job.target_column }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-orange-50 to-red-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8 text-center">
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                    <i class="fas fa-cogs mr-3 text-orange-600"></i>
+                    Training ML Models
+                </h1>
+                <p class="text-gray-600">Target Column: <span class="font-semibold text-orange-600">{{ ml_job.target_column }}</span></p>
+                <p class="text-gray-600">Problem Type: <span class="font-semibold text-red-600">{{ ml_job.problem_type }}</span></p>
+            </div>
+
+            <!-- Training Status Card -->
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                <div class="text-center">
+                    {% if ml_job.status == 'PENDING' %}
+                        <div class="mb-6">
+                            <i class="fas fa-clock text-6xl text-yellow-500 mb-4"></i>
+                            <h2 class="text-2xl font-bold text-gray-800">Preparing Training</h2>
+                            <p class="text-gray-600">Getting ready to train your models...</p>
+                        </div>
+                    {% elif ml_job.status == 'RUNNING' %}
+                        <div class="mb-6">
+                            <i class="fas fa-spinner fa-spin text-6xl text-blue-500 mb-4"></i>
+                            <h2 class="text-2xl font-bold text-gray-800">Training in Progress</h2>
+                            <p class="text-gray-600">Training models and generating results...</p>
+                        </div>
+                    {% elif ml_job.status == 'FAILED' %}
+                        <div class="mb-6">
+                            <i class="fas fa-exclamation-triangle text-6xl text-red-500 mb-4"></i>
+                            <h2 class="text-2xl font-bold text-gray-800">Training Failed</h2>
+                            <p class="text-red-600">{{ ml_job.error_message }}</p>
+                        </div>
+                    {% endif %}
+
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-gray-200 rounded-full h-4 mb-6">
+                        <div class="bg-gradient-to-r from-orange-500 to-red-500 h-4 rounded-full transition-all duration-500"
+                             style="width: {% if ml_job.status == 'PENDING' %}25%{% elif ml_job.status == 'RUNNING' %}75%{% elif ml_job.status == 'COMPLETED' %}100%{% else %}0%{% endif %}"></div>
+                    </div>
+
+                    <!-- Training Steps -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full {% if ml_job.status in 'PENDING,RUNNING,COMPLETED' %}bg-green-500{% else %}bg-gray-300{% endif %} flex items-center justify-center mb-2">
+                                <i class="fas fa-check text-white"></i>
+                            </div>
+                            <span class="text-sm text-gray-600">Data Loading</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full {% if ml_job.status in 'RUNNING,COMPLETED' %}bg-green-500{% else %}bg-gray-300{% endif %} flex items-center justify-center mb-2">
+                                {% if ml_job.status == 'RUNNING' %}
+                                    <i class="fas fa-spinner fa-spin text-white"></i>
+                                {% else %}
+                                    <i class="fas fa-check text-white"></i>
+                                {% endif %}
+                            </div>
+                            <span class="text-sm text-gray-600">Preprocessing</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full {% if ml_job.status == 'COMPLETED' %}bg-green-500{% elif ml_job.status == 'RUNNING' %}bg-blue-500{% else %}bg-gray-300{% endif %} flex items-center justify-center mb-2">
+                                {% if ml_job.status == 'RUNNING' %}
+                                    <i class="fas fa-spinner fa-spin text-white"></i>
+                                {% elif ml_job.status == 'COMPLETED' %}
+                                    <i class="fas fa-check text-white"></i>
+                                {% else %}
+                                    <i class="fas fa-robot text-white"></i>
+                                {% endif %}
+                            </div>
+                            <span class="text-sm text-gray-600">Model Training</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-10 h-10 rounded-full {% if ml_job.status == 'COMPLETED' %}bg-green-500{% else %}bg-gray-300{% endif %} flex items-center justify-center mb-2">
+                                {% if ml_job.status == 'COMPLETED' %}
+                                    <i class="fas fa-check text-white"></i>
+                                {% else %}
+                                    <i class="fas fa-chart-bar text-white"></i>
+                                {% endif %}
+                            </div>
+                            <span class="text-sm text-gray-600">Results</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    {% if ml_job.status == 'PENDING' %}
+                        <form method="post" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg shadow-md transition duration-300 flex items-center mx-auto">
+                                <i class="fas fa-play mr-2"></i>
+                                Start Training
+                            </button>
+                        </form>
+                    {% elif ml_job.status == 'RUNNING' %}
+                        <button onclick="checkStatus()" 
+                                class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg shadow-md transition duration-300 flex items-center mx-auto">
+                            <i class="fas fa-sync-alt mr-2"></i>
+                            Check Status
+                        </button>
+                    {% elif ml_job.status == 'FAILED' %}
+                        <div class="space-x-4">
+                            <a href="{% url 'analytics:select_target_column' uploaded_file.id %}" 
+                               class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg shadow-md transition duration-300 inline-flex items-center">
+                                <i class="fas fa-redo mr-2"></i>
+                                Try Again
+                            </a>
+                            <a href="{% url 'accounts:dashboard' %}" 
+                               class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg shadow-md transition duration-300 inline-flex items-center">
+                                <i class="fas fa-home mr-2"></i>
+                                Dashboard
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Training Information -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-info-circle mr-3 text-blue-600"></i>
+                    Training Details
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Dataset:</span>
+                            <span class="font-semibold">{{ uploaded_file.filename }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Target Column:</span>
+                            <span class="font-semibold text-orange-600">{{ ml_job.target_column }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Problem Type:</span>
+                            <span class="font-semibold text-red-600">{{ ml_job.problem_type }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Test Size:</span>
+                            <span class="font-semibold">{{ ml_job.test_size|floatformat:0 }}%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Status:</span>
+                            <span class="font-semibold 
+                                {% if ml_job.status == 'COMPLETED' %}text-green-600
+                                {% elif ml_job.status == 'RUNNING' %}text-blue-600
+                                {% elif ml_job.status == 'FAILED' %}text-red-600
+                                {% else %}text-yellow-600{% endif %}">
+                                {{ ml_job.status }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Created:</span>
+                            <span class="font-semibold">{{ ml_job.created_at|date:"M d, Y H:i" }}</span>
+                        </div>
+                        {% if ml_job.completed_at %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Completed:</span>
+                            <span class="font-semibold">{{ ml_job.completed_at|date:"M d, Y H:i" }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Models:</span>
+                            <span class="font-semibold">Baseline + 2 Advanced</span>
+                        </div>
+                    </div>
+                </div>
+
+                {% if ml_job.problem_type == 'REGRESSION' %}
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <h3 class="font-bold text-blue-800 mb-2">Regression Models:</h3>
+                    <ul class="text-blue-700 text-sm space-y-1">
+                        <li>• <strong>Baseline:</strong> Mean predictor (dummy regressor)</li>
+                        <li>• <strong>Linear Regression:</strong> Simple linear relationship</li>
+                        <li>• <strong>Random Forest:</strong> Advanced ensemble method</li>
+                    </ul>
+                    <p class="text-blue-700 text-sm mt-2"><strong>Metrics:</strong> RMSE (lower is better), R² (higher is better)</p>
+                </div>
+                {% else %}
+                <div class="mt-6 p-4 bg-green-50 rounded-lg">
+                    <h3 class="font-bold text-green-800 mb-2">Classification Models:</h3>
+                    <ul class="text-green-700 text-sm space-y-1">
+                        <li>• <strong>Baseline:</strong> Most frequent class predictor</li>
+                        <li>• <strong>Logistic Regression:</strong> Linear classification</li>
+                        <li>• <strong>Random Forest:</strong> Advanced ensemble method</li>
+                    </ul>
+                    <p class="text-green-700 text-sm mt-2"><strong>Metrics:</strong> Accuracy, Confusion Matrix</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function checkStatus() {
+    fetch('{% url "analytics:job_status_api" ml_job.id %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.completed) {
+                window.location.href = '{% url "analytics:ml_results" ml_job.id %}';
+            } else if (data.status === 'FAILED') {
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error checking status:', error);
+        });
+}
+
+// Auto-refresh for running jobs
+{% if ml_job.status == 'RUNNING' %}
+setInterval(checkStatus, 5000); // Check every 5 seconds
+{% endif %}
+</script>
+{% endblock %}

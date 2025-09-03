@@ -19,6 +19,53 @@ class UserProfile(models.Model):
         return f"{self.user.username} - {self.role}"
 
 
+class MLTrainingJob(models.Model):
+    """Model to track ML training jobs and their status"""
+    STATUS_CHOICES = (
+        ('PENDING', 'Pending'),
+        ('RUNNING', 'Running'),
+        ('COMPLETED', 'Completed'),
+        ('FAILED', 'Failed'),
+    )
+    
+    PROBLEM_TYPE_CHOICES = (
+        ('REGRESSION', 'Regression'),
+        ('CLASSIFICATION', 'Classification'),
+    )
+    
+    uploaded_file = models.ForeignKey('UploadedFile', on_delete=models.CASCADE)
+    target_column = models.CharField(max_length=255)
+    problem_type = models.CharField(max_length=20, choices=PROBLEM_TYPE_CHOICES)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    
+    # Training configuration
+    test_size = models.FloatField(default=0.2)
+    random_state = models.IntegerField(default=42)
+    
+    # Results (JSON fields)
+    preprocessing_info = models.JSONField(null=True, blank=True)
+    model_results = models.JSONField(null=True, blank=True)
+    model_paths = models.JSONField(null=True, blank=True)  # Paths to saved models
+    plot_paths = models.JSONField(null=True, blank=True)   # Paths to generated plots
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    error_message = models.TextField(null=True, blank=True)
+    
+    # Performance metrics
+    best_model_name = models.CharField(max_length=100, null=True, blank=True)
+    best_model_score = models.FloatField(null=True, blank=True)  # R² for regression, Accuracy for classification
+    
+    def __str__(self):
+        return f"ML Job {self.id} - {self.uploaded_file.filename} - {self.target_column}"
+    
+    class Meta:
+        ordering = ['-created_at']
+        # Prevent duplicate jobs for the same file and target column
+        # Note: This allows multiple training attempts but requires explicit deletion of old jobs
+
+
 class UploadedFile(models.Model):
     """Model to store uploaded CSV/Excel files for data analysis"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='uploaded_files')

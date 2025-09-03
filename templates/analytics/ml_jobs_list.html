@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+
+{% block title %}ML Training Jobs{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-4xl font-bold text-gray-800 mb-2 flex items-center">
+                    <i class="fas fa-robot mr-3 text-blue-600"></i>
+                    ML Training Jobs
+                </h1>
+                <p class="text-gray-600">Track all your machine learning model training sessions</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-blue-600 text-sm font-semibold uppercase tracking-wide">Total Jobs</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ total_jobs }}</p>
+                        </div>
+                        <div class="bg-blue-100 rounded-full p-3">
+                            <i class="fas fa-chart-bar text-blue-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-green-600 text-sm font-semibold uppercase tracking-wide">Completed</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ completed_jobs }}</p>
+                        </div>
+                        <div class="bg-green-100 rounded-full p-3">
+                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-yellow-600 text-sm font-semibold uppercase tracking-wide">Running</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ running_jobs }}</p>
+                        </div>
+                        <div class="bg-yellow-100 rounded-full p-3">
+                            <i class="fas fa-spinner text-yellow-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-red-600 text-sm font-semibold uppercase tracking-wide">Failed</p>
+                            <p class="text-3xl font-bold text-gray-900">{{ failed_jobs }}</p>
+                        </div>
+                        <div class="bg-red-100 rounded-full p-3">
+                            <i class="fas fa-times-circle text-red-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter/Search Section -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                    <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
+                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                onchange="filterJobs(this.value)">
+                            <option value="">All Statuses</option>
+                            <option value="completed">Completed</option>
+                            <option value="running">Running</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="filterByType(this.value)">
+                            <option value="">All Types</option>
+                            <option value="regression">Regression</option>
+                            <option value="classification">Classification</option>
+                        </select>
+                    </div>
+                    <a href="{% url 'accounts:dashboard' %}" 
+                       class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg shadow-md transition duration-300 flex items-center w-fit">
+                        <i class="fas fa-plus mr-2"></i>
+                        Start New Training
+                    </a>
+                </div>
+            </div>
+
+            <!-- Jobs List -->
+            {% if ml_jobs %}
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800">Recent Training Jobs</h2>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dataset & Target</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Problem Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Best Model</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for job in ml_jobs %}
+                            <tr class="hover:bg-gray-50 transition-colors duration-200" data-status="{{ job.status }}" data-type="{{ job.problem_type }}">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 w-10 h-10">
+                                            <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center">
+                                                <i class="fas fa-database text-white"></i>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ job.uploaded_file.file.name|truncatechars:30 }}</div>
+                                            <div class="text-sm text-gray-500">Target: {{ job.target_column }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        {% if job.problem_type == 'regression' %}bg-blue-100 text-blue-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                        {{ job.problem_type|title }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if job.status == 'completed' %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            <i class="fas fa-check-circle mr-1"></i>
+                                            Completed
+                                        </span>
+                                    {% elif job.status == 'running' %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                            <i class="fas fa-spinner fa-spin mr-1"></i>
+                                            Running
+                                        </span>
+                                    {% elif job.status == 'failed' %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                            <i class="fas fa-times-circle mr-1"></i>
+                                            Failed
+                                        </span>
+                                    {% else %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                            {{ job.status|title }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {% if job.status == 'completed' and job.results %}
+                                        {{ job.results.best_model.name|default:"N/A"|title }}
+                                    {% else %}
+                                        <span class="text-gray-400">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {% if job.status == 'completed' and job.results %}
+                                        <span class="font-semibold text-blue-600">
+                                            {% if job.problem_type == 'regression' %}
+                                                {{ job.results.best_model.score|floatformat:3 }}
+                                            {% else %}
+                                                {{ job.results.best_model.score|floatformat:1 }}%
+                                            {% endif %}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-400">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ job.created_at|date:"M d, Y" }}<br>
+                                    <span class="text-xs">{{ job.created_at|time:"g:i A" }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                    {% if job.status == 'completed' %}
+                                        <a href="{% url 'analytics:ml_results' job.id %}" 
+                                           class="text-blue-600 hover:text-blue-900 transition-colors duration-200">
+                                            <i class="fas fa-eye mr-1"></i>
+                                            View Results
+                                        </a>
+                                    {% elif job.status == 'running' %}
+                                        <a href="{% url 'analytics:train_model' job.uploaded_file.id job.target_column %}" 
+                                           class="text-yellow-600 hover:text-yellow-900 transition-colors duration-200">
+                                            <i class="fas fa-eye mr-1"></i>
+                                            View Progress
+                                        </a>
+                                    {% else %}
+                                        <span class="text-gray-400">
+                                            <i class="fas fa-times mr-1"></i>
+                                            Failed
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination (if needed) -->
+                {% if ml_jobs.has_other_pages %}
+                <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                    <div class="flex-1 flex justify-between sm:hidden">
+                        {% if ml_jobs.has_previous %}
+                            <a href="?page={{ ml_jobs.previous_page_number }}" 
+                               class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Previous
+                            </a>
+                        {% endif %}
+                        {% if ml_jobs.has_next %}
+                            <a href="?page={{ ml_jobs.next_page_number }}" 
+                               class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                                Next
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+                <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-robot text-gray-400 text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-2">No ML Training Jobs Yet</h3>
+                <p class="text-gray-600 mb-8">Upload a dataset and start training your first machine learning model!</p>
+                <a href="{% url 'accounts:dashboard' %}" 
+                   class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md transition duration-300 inline-flex items-center">
+                    <i class="fas fa-upload mr-2"></i>
+                    Upload Dataset
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function filterJobs(status) {
+    const rows = document.querySelectorAll('tbody tr[data-status]');
+    rows.forEach(row => {
+        if (status === '' || row.dataset.status === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function filterByType(type) {
+    const rows = document.querySelectorAll('tbody tr[data-type]');
+    rows.forEach(row => {
+        if (type === '' || row.dataset.type === type) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// Auto-refresh for running jobs
+document.addEventListener('DOMContentLoaded', function() {
+    const runningJobs = document.querySelectorAll('tr[data-status="running"]');
+    if (runningJobs.length > 0) {
+        setTimeout(() => {
+            window.location.reload();
+        }, 30000); // Refresh every 30 seconds if there are running jobs
+    }
+});
+</script>
+{% endblock %}
