@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Column Analysis - {{ uploaded_file.filename }} - DataSaaS{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <!-- Header Section -->
+  <div class="mb-8">
+    <div class="breadcrumbs text-sm">
+      <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+        <li><a href="{% url 'analytics:eda_view' uploaded_file.id %}">EDA Analysis</a></li>
+        <li>Column Analysis</li>
+      </ul>
+    </div>
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <h1 class="text-4xl font-bold mb-2">Column Analysis</h1>
+        <p class="text-base-content/70">Detailed analysis of {{ uploaded_file.filename }}</p>
+      </div>
+      <div class="mt-4 lg:mt-0">
+        <div class="stats shadow">
+          <div class="stat">
+            <div class="stat-title">Total Rows</div>
+            <div class="stat-value text-primary">{{ total_rows }}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">Total Columns</div>
+            <div class="stat-value text-secondary">{{ total_columns }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column Information Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for col_info in columns_info %}
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">
+          {{ col_info.name }}
+          <div class="badge badge-secondary">{{ col_info.dtype }}</div>
+        </h2>
+        
+        <!-- Basic Statistics -->
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span class="font-medium">Unique Values:</span>
+            <span class="badge badge-primary">{{ col_info.unique_count }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="font-medium">Missing Values:</span>
+            <span class="badge badge-warning">{{ col_info.null_count }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="font-medium">Missing %:</span>
+            <span class="badge badge-info">{{ col_info.null_percentage }}%</span>
+          </div>
+        </div>
+
+        <!-- Numeric Statistics -->
+        {% if col_info.mean is not None %}
+        <div class="divider">Numeric Statistics</div>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div class="stat-desc">Mean: {{ col_info.mean }}</div>
+          <div class="stat-desc">Median: {{ col_info.median }}</div>
+          <div class="stat-desc">Std: {{ col_info.std }}</div>
+          <div class="stat-desc">Min: {{ col_info.min }}</div>
+          <div class="stat-desc">Max: {{ col_info.max }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Categorical Top Values -->
+        {% if col_info.top_values %}
+        <div class="divider">Top Values</div>
+        <div class="space-y-1">
+          {% for value, count in col_info.top_values.items %}
+          <div class="flex justify-between text-sm">
+            <span class="truncate">{{ value }}</span>
+            <span class="badge badge-outline badge-xs">{{ count }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="flex flex-wrap gap-4 mt-8">
+    <a href="{% url 'analytics:eda_view' uploaded_file.id %}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left mr-2"></i>
+      Back to EDA
+    </a>
+    <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline">
+      <i class="fas fa-home mr-2"></i>
+      Dashboard
+    </a>
+  </div>
+</div>
+{% endblock %}
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title text-2xl mb-4">
+        {% if analysis.type == 'numeric' %}
+          <i class="fas fa-calculator text-primary"></i>
+          Numeric Column Analysis
+        {% else %}
+          <i class="fas fa-list text-secondary"></i>
+          Categorical Column Analysis
+        {% endif %}
+      </h2>
+
+      {% if analysis.type == 'numeric' %}
+        <!-- Numeric Analysis -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="stat bg-base-200 rounded-lg">
+            <div class="stat-title">Count</div>
+            <div class="stat-value text-primary">{{ analysis.stats.count }}</div>
+          </div>
+          <div class="stat bg-base-200 rounded-lg">
+            <div class="stat-title">Missing</div>
+            <div class="stat-value text-warning">{{ analysis.stats.missing }}</div>
+          </div>
+          <div class="stat bg-base-200 rounded-lg">
+            <div class="stat-title">Mean</div>
+            <div class="stat-value text-secondary">{{ analysis.stats.mean|floatformat:2 }}</div>
+          </div>
+          <div class="stat bg-base-200 rounded-lg">
+            <div class="stat-title">Median</div>
+            <div class="stat-value text-accent">{{ analysis.stats.median|floatformat:2 }}</div>
+          </div>
+          <div class="stat bg-base-200 rounded-lg">
+            <div class="stat-title">Std Dev</div>
+            <div class="stat-value text-info">{{ analysis.stats.std|floatformat:2 }}</div>
+          </div>
+          <div class="stat bg-base-200 rounded-lg">
+            <div class="stat-title">Range</div>
+            <div class="stat-value text-success">{{ analysis.stats.min|floatformat:2 }} - {{ analysis.stats.max|floatformat:2 }}</div>
+          </div>
+        </div>
+
+        <!-- Quartiles -->
+        <div class="mt-6">
+          <h3 class="text-xl font-bold mb-4">Quartiles & Distribution</h3>
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="stat bg-primary/10 rounded-lg">
+              <div class="stat-title">Q1 (25%)</div>
+              <div class="stat-value text-primary">{{ analysis.stats.q25|floatformat:2 }}</div>
+            </div>
+            <div class="stat bg-secondary/10 rounded-lg">
+              <div class="stat-title">Q2 (50%)</div>
+              <div class="stat-value text-secondary">{{ analysis.stats.median|floatformat:2 }}</div>
+            </div>
+            <div class="stat bg-accent/10 rounded-lg">
+              <div class="stat-title">Q3 (75%)</div>
+              <div class="stat-value text-accent">{{ analysis.stats.q75|floatformat:2 }}</div>
+            </div>
+            <div class="stat bg-warning/10 rounded-lg">
+              <div class="stat-title">Skewness</div>
+              <div class="stat-value 
+                {% if analysis.stats.skewness > 1 %}text-error
+                {% elif analysis.stats.skewness < -1 %}text-error
+                {% else %}text-success{% endif %}">
+                {{ analysis.stats.skewness|floatformat:2 }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      {% else %}
+        <!-- Categorical Analysis -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="stat bg-base-200 rounded-lg">
+            <div class="stat-title">Count</div>
+            <div class="stat-value text-primary">{{ analysis.stats.count }}</div>
+          </div>
+          <div class="stat bg-base-200 rounded-lg">
+            <div class="stat-title">Missing</div>
+            <div class="stat-value text-warning">{{ analysis.stats.missing }}</div>
+          </div>
+          <div class="stat bg-base-200 rounded-lg">
+            <div class="stat-title">Unique Values</div>
+            <div class="stat-value text-secondary">{{ analysis.stats.unique }}</div>
+          </div>
+          <div class="stat bg-base-200 rounded-lg">
+            <div class="stat-title">Most Frequent</div>
+            <div class="stat-value text-accent text-sm">{{ analysis.stats.top_value|truncatechars:15 }}</div>
+            <div class="stat-desc">{{ analysis.stats.top_count }} times</div>
+          </div>
+        </div>
+
+        <!-- Value Counts -->
+        <div class="mt-6">
+          <h3 class="text-xl font-bold mb-4">Top 10 Values</h3>
+          <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+              <thead>
+                <tr>
+                  <th>Value</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for value, count in analysis.stats.value_counts.items %}
+                  <tr>
+                    <td class="font-medium">{{ value }}</td>
+                    <td>{{ count }}</td>
+                    <td>
+                      <div class="flex items-center">
+                        <span class="mr-2">{{ count|mul:100|div:analysis.stats.count|floatformat:1 }}%</span>
+                        <progress class="progress progress-primary w-20" 
+                                value="{{ count|mul:100|div:analysis.stats.count }}" max="100"></progress>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Action Buttons -->
+      <div class="card-actions justify-end mt-6">
+        <a href="{% url 'analytics:eda_view' uploaded_file.id %}" class="btn btn-outline">
+          <i class="fas fa-arrow-left mr-2"></i>
+          Back to EDA
+        </a>
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-primary">
+          <i class="fas fa-tachometer-alt mr-2"></i>
+          Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

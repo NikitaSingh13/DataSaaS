@@ -28,26 +28,26 @@
             <p class="text-base-content/70">Supports CSV, Excel (.xlsx, .xls) files up to 100MB</p>
           </div>
           <div>
-            <button class="btn btn-primary">
+            <a href="{% url 'accounts:upload_file' %}" class="btn btn-primary">
               <i class="fas fa-folder-open mr-2"></i>
               Browse Files
-            </button>
+            </a>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Recent Analytics Section -->
+  <!-- Recent Analytics Section - Dynamic Stats -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     <!-- Stats Cards -->
     <div class="stat bg-base-100 shadow-xl rounded-lg">
       <div class="stat-figure text-primary">
         <i class="fas fa-file-alt text-2xl"></i>
       </div>
-      <div class="stat-title">Files Analyzed</div>
-      <div class="stat-value text-primary">0</div>
-      <div class="stat-desc">This month</div>
+      <div class="stat-title">Files Uploaded</div>
+      <div class="stat-value text-primary">{{ total_files }}</div>
+      <div class="stat-desc">Total files</div>
     </div>
 
     <div class="stat bg-base-100 shadow-xl rounded-lg">
@@ -55,7 +55,7 @@
         <i class="fas fa-chart-line text-2xl"></i>
       </div>
       <div class="stat-title">Insights Generated</div>
-      <div class="stat-value text-secondary">0</div>
+      <div class="stat-value text-secondary">{{ total_insights }}</div>
       <div class="stat-desc">Total insights</div>
     </div>
 
@@ -64,7 +64,7 @@
         <i class="fas fa-download text-2xl"></i>
       </div>
       <div class="stat-title">Reports Downloaded</div>
-      <div class="stat-value text-accent">0</div>
+      <div class="stat-value text-accent">{{ total_reports }}</div>
       <div class="stat-desc">All time</div>
     </div>
   </div>
@@ -77,33 +77,112 @@
           <i class="fas fa-history text-primary"></i>
           Recent Files
         </h2>
-        <button class="btn btn-outline btn-sm">View All</button>
+        {% if user_files %}
+          <a href="{% url 'accounts:upload_file' %}" class="btn btn-outline btn-sm">Upload More</a>
+        {% endif %}
       </div>
       
-      <!-- Empty State -->
-      <div class="text-center py-12">
-        <div class="text-6xl text-base-content/20 mb-4">
-          <i class="fas fa-inbox"></i>
+      {% if user_files %}
+        <!-- Files Table -->
+        <div class="mb-4">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <span>Click the <strong>"Analyze"</strong> button next to any file to perform comprehensive EDA (Exploratory Data Analysis) including statistics, visualizations, and automated insights!</span>
+          </div>
         </div>
-        <h3 class="text-xl font-semibold mb-2">No files analyzed yet</h3>
-        <p class="text-base-content/70 mb-4">Upload your first CSV or Excel file to get started with data analysis.</p>
-        <button class="btn btn-primary">
-          <i class="fas fa-plus mr-2"></i>
-          Upload Your First File
-        </button>
-      </div>
+        
+        <div class="overflow-x-auto">
+          <table class="table table-zebra w-full">
+            <thead>
+              <tr>
+                <th>File Name</th>
+                <th>Type</th>
+                <th>Size</th>
+                <th>Uploaded</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for file in user_files %}
+                <tr>
+                  <td>
+                    <div class="flex items-center space-x-3">
+                      <div class="avatar">
+                        <div class="mask mask-squircle w-12 h-12 bg-primary/10 flex items-center justify-center">
+                          {% if file.file_type == 'CSV' %}
+                            <i class="fas fa-file-csv text-green-500 text-xl"></i>
+                          {% elif file.file_type == 'XLSX' or file.file_type == 'XLS' %}
+                            <i class="fas fa-file-excel text-green-600 text-xl"></i>
+                          {% else %}
+                            <i class="fas fa-file text-base-content/50 text-xl"></i>
+                          {% endif %}
+                        </div>
+                      </div>
+                      <div>
+                        <div class="font-bold">{{ file.filename }}</div>
+                        <div class="text-sm opacity-50">{{ file.file_type }} file</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge badge-outline">{{ file.file_type }}</span>
+                  </td>
+                  <td>{{ file.get_file_size_display }}</td>
+                  <td>
+                    <div class="text-sm">{{ file.uploaded_at|date:"M d, Y" }}</div>
+                    <div class="text-xs opacity-50">{{ file.uploaded_at|time:"H:i" }}</div>
+                  </td>
+                  <td>
+                    <div class="flex space-x-1">
+                      <a href="{% url 'analytics:eda_view' file.id %}" 
+                         class="btn btn-primary btn-sm" 
+                         title="Analyze Data">
+                        <i class="fas fa-chart-line mr-1"></i>
+                        Analyze
+                      </a>
+                      <a href="{% url 'accounts:download_file' file.id %}" 
+                         class="btn btn-outline btn-sm" 
+                         title="Download">
+                        <i class="fas fa-download"></i>
+                      </a>
+                      <button onclick="confirmDelete({{ file.id }}, '{{ file.filename }}')" 
+                              class="btn btn-outline btn-error btn-sm" 
+                              title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-12">
+          <div class="text-6xl text-base-content/20 mb-4">
+            <i class="fas fa-inbox"></i>
+          </div>
+          <h3 class="text-xl font-semibold mb-2">No files uploaded yet</h3>
+          <p class="text-base-content/70 mb-4">Upload your first CSV or Excel file to get started with data analysis.</p>
+          <a href="{% url 'accounts:upload_file' %}" class="btn btn-primary">
+            <i class="fas fa-plus mr-2"></i>
+            Upload Your First File
+          </a>
+        </div>
+      {% endif %}
     </div>
   </div>
 
   <!-- Quick Actions -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-    <div class="card bg-gradient-to-br from-primary to-primary-focus text-primary-content shadow-xl">
+    <a href="{% url 'accounts:upload_file' %}" class="card bg-gradient-to-br from-primary to-primary-focus text-primary-content shadow-xl hover:shadow-2xl transition-shadow">
       <div class="card-body text-center">
         <i class="fas fa-chart-pie text-3xl mb-2"></i>
-        <h3 class="font-bold">Quick Analysis</h3>
+        <h3 class="font-bold">Upload & Analyze</h3>
         <p class="text-sm opacity-80">Get instant insights</p>
       </div>
-    </div>
+    </a>
 
     <div class="card bg-gradient-to-br from-secondary to-secondary-focus text-secondary-content shadow-xl">
       <div class="card-body text-center">
@@ -130,4 +209,24 @@
     </div>
   </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<dialog id="delete_modal" class="modal">
+  <form method="dialog" class="modal-box">
+    <h3 class="font-bold text-lg">Confirm Deletion</h3>
+    <p class="py-4">Are you sure you want to delete "<span id="delete-filename"></span>"? This action cannot be undone.</p>
+    <div class="modal-action">
+      <button class="btn">Cancel</button>
+      <a id="delete-link" href="#" class="btn btn-error">Delete</a>
+    </div>
+  </form>
+</dialog>
+
+<script>
+function confirmDelete(fileId, filename) {
+    document.getElementById('delete-filename').textContent = filename;
+    document.getElementById('delete-link').href = "{% url 'accounts:delete_file' 0 %}".replace('0', fileId);
+    document.getElementById('delete_modal').showModal();
+}
+</script>
 {% endblock %}

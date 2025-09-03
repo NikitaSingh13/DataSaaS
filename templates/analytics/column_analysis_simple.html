@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Column Analysis - {{ uploaded_file.filename }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                            <i class="fas fa-columns mr-3 text-purple-600"></i>
+                            Column Analysis
+                        </h1>
+                        <p class="text-gray-600">Detailed analysis of: <span class="font-semibold text-purple-600">{{ uploaded_file.filename }}</span></p>
+                    </div>
+                    <div class="hidden lg:block">
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <div class="flex items-center space-x-4">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-purple-600">{{ total_rows }}</div>
+                                    <div class="text-sm text-gray-500">Total Rows</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-pink-600">{{ total_columns }}</div>
+                                    <div class="text-sm text-gray-500">Total Columns</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column Information Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {% for col_info in columns_info %}
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden border-l-4 {% cycle 'border-blue-500' 'border-green-500' 'border-purple-500' 'border-red-500' 'border-yellow-500' 'border-indigo-500' %}">
+                    <div class="p-6">
+                        <!-- Column Header -->
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold text-gray-800 truncate pr-2">{{ col_info.name }}</h2>
+                            <span class="px-3 py-1 rounded-full text-sm font-semibold 
+                                {% if col_info.dtype == 'object' %}bg-blue-100 text-blue-800
+                                {% elif 'int' in col_info.dtype %}bg-green-100 text-green-800
+                                {% elif 'float' in col_info.dtype %}bg-purple-100 text-purple-800
+                                {% elif 'datetime' in col_info.dtype %}bg-orange-100 text-orange-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ col_info.dtype }}
+                            </span>
+                        </div>
+                        
+                        <!-- Basic Statistics -->
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 font-medium">Unique Values:</span>
+                                <span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded font-semibold">{{ col_info.unique_count }}</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 font-medium">Non-null Count:</span>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded font-semibold">{{ col_info.non_null_count }}</span>
+                            </div>
+                            
+                            {% if col_info.null_count > 0 %}
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 font-medium">Missing:</span>
+                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded font-semibold">{{ col_info.null_count }} ({{ col_info.null_percentage }}%)</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-red-500 h-2 rounded-full" style="width: {{ col_info.null_percentage }}%"></div>
+                            </div>
+                            {% else %}
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600 font-medium">Missing:</span>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded font-semibold">None</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Numerical Statistics -->
+                        {% if col_info.mean is not None %}
+                        <div class="mt-6 pt-4 border-t border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Numerical Stats</h3>
+                            <div class="grid grid-cols-2 gap-3 text-sm">
+                                <div class="bg-blue-50 p-2 rounded">
+                                    <div class="text-gray-600">Mean</div>
+                                    <div class="font-semibold text-blue-600">{{ col_info.mean }}</div>
+                                </div>
+                                <div class="bg-green-50 p-2 rounded">
+                                    <div class="text-gray-600">Median</div>
+                                    <div class="font-semibold text-green-600">{{ col_info.median }}</div>
+                                </div>
+                                <div class="bg-purple-50 p-2 rounded">
+                                    <div class="text-gray-600">Std Dev</div>
+                                    <div class="font-semibold text-purple-600">{{ col_info.std }}</div>
+                                </div>
+                                <div class="bg-orange-50 p-2 rounded">
+                                    <div class="text-gray-600">Range</div>
+                                    <div class="font-semibold text-orange-600">{{ col_info.min }} - {{ col_info.max }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Categorical Statistics -->
+                        {% if col_info.top_values %}
+                        <div class="mt-6 pt-4 border-t border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Top Values</h3>
+                            <div class="space-y-2">
+                                {% for value, count in col_info.top_values.items %}
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-700 truncate pr-2">{{ value }}</span>
+                                    <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-semibold">{{ count }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Memory Usage -->
+                        <div class="mt-4 pt-3 border-t border-gray-200">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-600">Memory Usage:</span>
+                                <span class="text-gray-800 font-medium">{{ col_info.memory_usage|filesizeformat }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Summary Statistics -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-chart-pie mr-3 text-indigo-600"></i>
+                    Dataset Summary
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="text-center bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg">
+                        <div class="text-3xl font-bold text-blue-600 mb-2">{{ total_rows|floatformat:0 }}</div>
+                        <div class="text-gray-600">Total Rows</div>
+                    </div>
+                    <div class="text-center bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg">
+                        <div class="text-3xl font-bold text-green-600 mb-2">{{ total_columns }}</div>
+                        <div class="text-gray-600">Total Columns</div>
+                    </div>
+                    <div class="text-center bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg">
+                        <div class="text-3xl font-bold text-purple-600 mb-2">{{ memory_usage|filesizeformat }}</div>
+                        <div class="text-gray-600">Memory Usage</div>
+                    </div>
+                    <div class="text-center bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg">
+                        <div class="text-3xl font-bold text-orange-600 mb-2">
+                            {% widthratio columns_info|length total_columns 100 %}%
+                        </div>
+                        <div class="text-gray-600">Completeness</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-center space-x-4">
+                <a href="{% url 'analytics:eda_view' uploaded_file.id %}" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg shadow-md transition duration-300 flex items-center">
+                    <i class="fas fa-chart-line mr-2"></i>
+                    Back to EDA
+                </a>
+                <a href="{% url 'accounts:dashboard' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg shadow-md transition duration-300 flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+</style>
+{% endblock %}

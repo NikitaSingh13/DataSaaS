@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+
+{% block title %}EDA Analysis - {{ uploaded_file.filename }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                            <i class="fas fa-chart-line mr-3 text-blue-600"></i>
+                            Exploratory Data Analysis
+                        </h1>
+                        <p class="text-gray-600">Analysis results for: <span class="font-semibold text-indigo-600">{{ uploaded_file.filename }}</span></p>
+                    </div>
+                    <div class="hidden lg:block">
+                        <div class="bg-white rounded-lg shadow-md p-4">
+                            <div class="flex items-center space-x-4">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-blue-600">{{ summary.rows }}</div>
+                                    <div class="text-sm text-gray-500">Rows</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-green-600">{{ summary.columns }}</div>
+                                    <div class="text-sm text-gray-500">Columns</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dataset Overview Cards -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+                    <div class="flex items-center">
+                        <div class="bg-blue-100 p-3 rounded-lg mr-4">
+                            <i class="fas fa-table text-blue-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Total Rows</h3>
+                            <p class="text-3xl font-bold text-blue-600">{{ summary.rows|floatformat:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+                    <div class="flex items-center">
+                        <div class="bg-green-100 p-3 rounded-lg mr-4">
+                            <i class="fas fa-columns text-green-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Total Columns</h3>
+                            <p class="text-3xl font-bold text-green-600">{{ summary.columns }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                    <div class="flex items-center">
+                        <div class="bg-purple-100 p-3 rounded-lg mr-4">
+                            <i class="fas fa-database text-purple-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800">Memory Usage</h3>
+                            <p class="text-lg font-bold text-purple-600">{{ summary.memory_usage }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Preview -->
+            {% if df_head %}
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-table mr-3 text-blue-600"></i>
+                    Data Preview (First 5 rows)
+                </h2>
+                <div class="overflow-x-auto bg-gray-50 rounded-lg p-4">
+                    {{ df_head|safe }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Missing Values -->
+            {% if summary.missing_values %}
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-3 text-yellow-500"></i>
+                    Missing Values Analysis
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full table-auto">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Column</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Missing Count</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Percentage</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for missing_info in summary.missing_values %}
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium text-gray-800">{{ missing_info.column }}</td>
+                                <td class="px-4 py-3 text-red-600 font-semibold">{{ missing_info.count }}</td>
+                                <td class="px-4 py-3 text-red-600 font-semibold">{{ missing_info.percentage|floatformat:1 }}%</td>
+                                <td class="px-4 py-3">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-red-500 h-2 rounded-full" style="width: {{ missing_info.percentage }}%"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div class="text-center py-8">
+                    <i class="fas fa-check-circle text-green-500 text-6xl mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">No Missing Values!</h3>
+                    <p class="text-gray-600">Your dataset is complete with no missing values.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Numerical Summary -->
+            {% if summary.numerical_summary %}
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-calculator mr-3 text-green-600"></i>
+                    Numerical Statistics
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full table-auto">
+                        <thead>
+                            <tr class="bg-gradient-to-r from-green-100 to-blue-100">
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Column</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Count</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Mean</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Std Dev</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Min</th>
+                                <th class="px-4 py-3 text-left font-semibold text-gray-700">Max</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in summary.numerical_summary %}
+                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                <td class="px-4 py-3 font-medium text-gray-800">{{ stat.column }}</td>
+                                <td class="px-4 py-3 text-blue-600">{{ stat.count }}</td>
+                                <td class="px-4 py-3 text-green-600">{{ stat.mean|floatformat:2 }}</td>
+                                <td class="px-4 py-3 text-purple-600">{{ stat.std|floatformat:2 }}</td>
+                                <td class="px-4 py-3 text-orange-600">{{ stat.min|floatformat:2 }}</td>
+                                <td class="px-4 py-3 text-red-600">{{ stat.max|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Categorical Summary -->
+            {% if summary.categorical_summary %}
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-tags mr-3 text-purple-600"></i>
+                    Categorical Statistics
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for cat_stat in summary.categorical_summary %}
+                    <div class="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-6 border border-purple-200">
+                        <h3 class="font-bold text-gray-800 mb-3 text-lg">{{ cat_stat.column }}</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Unique values:</span>
+                                <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-sm font-semibold">{{ cat_stat.unique_count }}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Top value:</span>
+                                <span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-sm font-medium">{{ cat_stat.top_value }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Visualizations -->
+            {% if plots %}
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-chart-bar mr-3 text-indigo-600"></i>
+                    Data Visualizations
+                </h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    {% for plot in plots %}
+                    <div class="bg-gradient-to-br from-gray-50 to-blue-50 rounded-lg p-6 shadow-md">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4 text-center">
+                            {{ plot.name }}
+                        </h3>
+                        <div class="flex justify-center">
+                            <img src="/media/{{ plot.path }}" alt="{{ plot.name }}" 
+                                 class="max-w-full h-auto rounded-lg shadow-lg border border-gray-200">
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <div class="text-center py-8">
+                    <i class="fas fa-chart-bar text-gray-400 text-6xl mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">No Visualizations Available</h3>
+                    <p class="text-gray-600">Plots could not be generated for this dataset.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="flex justify-center space-x-4 mt-8">
+                <a href="{% url 'accounts:dashboard' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg shadow-md transition duration-300 flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Dashboard
+                </a>
+                <a href="{% url 'analytics:column_analysis' uploaded_file.id %}" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md transition duration-300 flex items-center">
+                    <i class="fas fa-search mr-2"></i>
+                    Column Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table th, .table td {
+    border: none;
+}
+.table tbody tr:hover {
+    background-color: #f8fafc;
+}
+</style>
+{% endblock %}

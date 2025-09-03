@@ -1,7 +1,14 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include("accounts.urls")),  # delegate to accounts app
+    path('', include(("accounts.urls", "accounts"), namespace="accounts")),  # delegate to accounts app with namespace
+    path('analytics/', include(("analytics.urls", "analytics"), namespace="analytics")),  # analytics app URLs with namespace
 ]
+
+# Serve media files in development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

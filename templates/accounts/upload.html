@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload File - DataSaaS{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="breadcrumbs text-sm">
+      <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+        <li>Upload File</li>
+      </ul>
+    </div>
+    <h1 class="text-4xl font-bold mb-2">Upload Your Data File</h1>
+    <p class="text-base-content/70">Upload CSV or Excel files to analyze your data and generate insights.</p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Upload Form -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title text-2xl mb-4">
+          <i class="fas fa-upload text-primary"></i>
+          Choose File to Upload
+        </h2>
+        
+        <!-- Upload Form with CSRF protection -->
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+          {% csrf_token %}
+          
+          <!-- File Input -->
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-medium">Select File</span>
+            </label>
+            <div class="relative">
+              <input type="file" 
+                     name="file" 
+                     class="file-input file-input-bordered file-input-primary w-full" 
+                     accept=".csv,.xlsx,.xls"
+                     id="file-upload"
+                     required>
+              <div class="mt-2 text-sm text-base-content/60">
+                <i class="fas fa-info-circle mr-1"></i>
+                Supported formats: CSV, Excel (.xlsx, .xls) | Max size: 100MB
+              </div>
+            </div>
+          </div>
+
+          <!-- Upload Button -->
+          <div class="form-control">
+            <button type="submit" class="btn btn-primary btn-block">
+              <i class="fas fa-cloud-upload-alt mr-2"></i>
+              Upload and Analyze
+            </button>
+          </div>
+
+          <!-- Back to Dashboard -->
+          <div class="form-control">
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline btn-block">
+              <i class="fas fa-arrow-left mr-2"></i>
+              Back to Dashboard
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Upload Instructions -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title text-2xl mb-4">
+          <i class="fas fa-lightbulb text-warning"></i>
+          Upload Guidelines
+        </h2>
+        
+        <div class="space-y-4">
+          <!-- Supported Formats -->
+          <div class="alert alert-info">
+            <div>
+              <h3 class="font-bold">Supported File Types</h3>
+              <ul class="list-disc list-inside mt-2">
+                <li>CSV files (.csv)</li>
+                <li>Excel files (.xlsx, .xls)</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- File Size Limit -->
+          <div class="alert alert-warning">
+            <div>
+              <h3 class="font-bold">File Size Limit</h3>
+              <p>Maximum file size is 100MB. For larger files, consider splitting them into smaller chunks.</p>
+            </div>
+          </div>
+
+          <!-- Data Tips -->
+          <div class="alert alert-success">
+            <div>
+              <h3 class="font-bold">Data Preparation Tips</h3>
+              <ul class="list-disc list-inside mt-2">
+                <li>Ensure your data has clear column headers</li>
+                <li>Remove empty rows and columns</li>
+                <li>Use consistent date formats</li>
+                <li>Avoid special characters in column names</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- What Happens Next -->
+          <div class="card bg-base-200">
+            <div class="card-body">
+              <h3 class="card-title text-lg">What happens after upload?</h3>
+              <ol class="list-decimal list-inside space-y-1 text-sm">
+                <li>File is securely stored in your account</li>
+                <li>Data is analyzed for basic insights</li>
+                <li>Preview of first 5 rows is generated</li>
+                <li>File appears in your dashboard</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Section (shown after successful upload) -->
+  {% if uploaded_file %}
+    <div class="card bg-base-100 shadow-xl mt-8">
+      <div class="card-body">
+        <h2 class="card-title text-2xl mb-4">
+          <i class="fas fa-eye text-success"></i>
+          File Preview: {{ uploaded_file.filename }}
+        </h2>
+        
+        {% if error_message %}
+          <div class="alert alert-error mb-4">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>{{ error_message }}</span>
+          </div>
+        {% elif preview_data %}
+          <!-- File Information -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="stat bg-base-200 rounded-lg">
+              <div class="stat-title">Total Rows</div>
+              <div class="stat-value text-primary">{{ preview_data.total_rows|floatformat:0 }}</div>
+            </div>
+            <div class="stat bg-base-200 rounded-lg">
+              <div class="stat-title">Total Columns</div>
+              <div class="stat-value text-secondary">{{ preview_data.total_columns }}</div>
+            </div>
+            <div class="stat bg-base-200 rounded-lg">
+              <div class="stat-title">File Size</div>
+              <div class="stat-value text-accent">{{ uploaded_file.get_file_size_display }}</div>
+            </div>
+            <div class="stat bg-base-200 rounded-lg">
+              <div class="stat-title">File Type</div>
+              <div class="stat-value text-success">{{ uploaded_file.file_type }}</div>
+            </div>
+          </div>
+
+          <!-- Data Preview Table -->
+          <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+              <thead>
+                <tr>
+                  {% for column in preview_data.columns %}
+                    <th class="text-sm font-bold">{{ column }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in preview_data.rows %}
+                  <tr>
+                    {% for cell in row %}
+                      <td class="text-sm">{{ cell|truncatechars:50 }}</td>
+                    {% endfor %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="alert alert-info mt-4">
+            <i class="fas fa-info-circle"></i>
+            <span>Showing first 5 rows of {{ preview_data.total_rows|floatformat:0 }} total rows.</span>
+          </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="card-actions justify-end mt-6">
+          <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline">
+            <i class="fas fa-tachometer-alt mr-2"></i>
+            Go to Dashboard
+          </a>
+          <a href="{% url 'analytics:eda_view' uploaded_file.id %}" class="btn btn-success">
+            <i class="fas fa-chart-line mr-2"></i>
+            Analyze Data
+          </a>
+          <a href="{% url 'accounts:upload_file' %}" class="btn btn-primary">
+            <i class="fas fa-plus mr-2"></i>
+            Upload Another File
+          </a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Auto-hide success messages after 5 seconds -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert:not(.alert-error)');
+        alerts.forEach(function(alert) {
+            alert.style.transition = 'opacity 0.5s';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 5000);
+});
+</script>
+{% endblock %}

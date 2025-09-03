@@ -1,0 +1,436 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}EDA Analysis - {{ uploaded_file.filename }} - DataSaaS{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <!-- Header Section -->
+  <div class="mb-8">
+    <div class="breadcrumbs text-sm">
+      <ul>
+        <li><a href="{% url 'accounts:dashboard' %}">Dashboard</a></li>
+        <li><a href="{% url 'accounts:dashboard' %}">Files</a></li>
+        <li>EDA Analysis</li>
+      </ul>
+    </div>
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <h1 class="text-4xl font-bold mb-2">Exploratory Data Analysis</h1>
+        <p class="text-base-content/70">Analysis of {{ uploaded_file.filename }}</p>
+      </div>
+      <div class="mt-4 lg:mt-0">
+        <div class="stats shadow">
+          <div class="stat">
+            <div class="stat-title">Rows</div>
+            <div class="stat-value text-primary">{{ summary.shape.0 }}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-title">Columns</div>
+            <div class="stat-value text-secondary">{{ summary.shape.1 }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dataset Overview -->
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <h2 class="card-title text-2xl mb-4">
+        <i class="fas fa-table text-primary"></i>
+        Dataset Overview
+      </h2>
+      
+      <!-- Data Preview -->
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold mb-3">Data Preview (First 5 rows)</h3>
+        <div class="overflow-x-auto">
+          {{ df_head|safe }}
+        </div>
+      </div>
+      
+      <!-- Missing Values -->
+      {% if summary.missing_values %}
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold mb-3">Missing Values</h3>
+        <div class="overflow-x-auto">
+          <table class="table table-zebra">
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>Missing Count</th>
+                <th>Missing Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for column, count in summary.missing_values.items %}
+              <tr>
+                <td>{{ column }}</td>
+                <td>{{ count }}</td>
+                <td>{{ summary.missing_percentage|lookup:column }}%</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Numeric Statistics -->
+  {% if summary.numeric_columns %}
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <h2 class="card-title text-2xl mb-4">
+        <i class="fas fa-chart-line text-primary"></i>
+        Numeric Statistics
+      </h2>
+      <div class="overflow-x-auto">
+        <table class="table table-zebra">
+          <thead>
+            <tr>
+              <th>Column</th>
+              <th>Count</th>
+              <th>Mean</th>
+              <th>Std</th>
+              <th>Min</th>
+              <th>25%</th>
+              <th>50%</th>
+              <th>75%</th>
+              <th>Max</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for column in summary.numeric_columns %}
+            <tr>
+              <td class="font-semibold">{{ column }}</td>
+              <td>{{ summary.numeric_summary|lookup:column|lookup:"count"|floatformat:0 }}</td>
+              <td>{{ summary.numeric_summary|lookup:column|lookup:"mean"|floatformat:2 }}</td>
+              <td>{{ summary.numeric_summary|lookup:column|lookup:"std"|floatformat:2 }}</td>
+              <td>{{ summary.numeric_summary|lookup:column|lookup:"min"|floatformat:2 }}</td>
+              <td>{{ summary.numeric_summary|lookup:column|lookup:"25%"|floatformat:2 }}</td>
+              <td>{{ summary.numeric_summary|lookup:column|lookup:"50%"|floatformat:2 }}</td>
+              <td>{{ summary.numeric_summary|lookup:column|lookup:"75%"|floatformat:2 }}</td>
+              <td>{{ summary.numeric_summary|lookup:column|lookup:"max"|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Categorical Statistics -->
+  {% if summary.categorical_columns %}
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <h2 class="card-title text-2xl mb-4">
+        <i class="fas fa-tags text-secondary"></i>
+        Categorical Statistics
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for column in summary.categorical_columns %}
+        <div class="card bg-base-200">
+          <div class="card-body">
+            <h3 class="card-title text-lg">{{ column }}</h3>
+            <div class="space-y-2">
+              <p><strong>Unique Values:</strong> {{ summary.categorical_summary|lookup:column|lookup:"unique_count" }}</p>
+              <p><strong>Top Values:</strong></p>
+              <ul class="list-disc list-inside text-sm space-y-1">
+                {% for value, count in summary.categorical_summary|lookup:column|lookup:"top_values"|dict_items %}
+                <li>{{ value }}: {{ count }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Visualizations -->
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <h2 class="card-title text-2xl mb-4">
+        <i class="fas fa-chart-bar text-accent"></i>
+        Visualizations
+      </h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {% if eda_summary.data_types.categorical_columns %}
+          <div class="mt-4">
+            <h3 class="font-bold mb-2">Categorical Columns:</h3>
+            <div class="flex flex-wrap gap-1">
+              {% for col in eda_summary.data_types.categorical_columns %}
+                <span class="badge badge-outline">{{ col }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Numeric Summary -->
+  {% if eda_summary.numeric_summary %}
+    <div class="card bg-base-100 shadow-xl mb-8">
+      <div class="card-body">
+        <h2 class="card-title text-2xl mb-4">
+          <i class="fas fa-calculator text-success"></i>
+          Numeric Summary Statistics
+        </h2>
+        <div class="overflow-x-auto">
+        <!-- Missing Values Heatmap -->
+        {% if plot_paths.missing_values %}
+        <div class="card bg-base-200">
+          <div class="card-body">
+            <h3 class="card-title">Missing Values Heatmap</h3>
+            <img src="{{ MEDIA_URL }}{{ plot_paths.missing_values }}" alt="Missing Values Heatmap" class="w-full rounded">
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Histograms -->
+        {% if plot_paths.histograms %}
+        <div class="card bg-base-200">
+          <div class="card-body">
+            <h3 class="card-title">Distribution Histograms</h3>
+            <img src="{{ MEDIA_URL }}{{ plot_paths.histograms }}" alt="Histograms" class="w-full rounded">
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Boxplots -->
+        {% if plot_paths.boxplots %}
+        <div class="card bg-base-200">
+          <div class="card-body">
+            <h3 class="card-title">Boxplots</h3>
+            <img src="{{ MEDIA_URL }}{{ plot_paths.boxplots }}" alt="Boxplots" class="w-full rounded">
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Correlation Heatmap -->
+        {% if plot_paths.correlation_heatmap %}
+        <div class="card bg-base-200">
+          <div class="card-body">
+            <h3 class="card-title">Correlation Heatmap</h3>
+            <img src="{{ MEDIA_URL }}{{ plot_paths.correlation_heatmap }}" alt="Correlation Heatmap" class="w-full rounded">
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Categorical Plots -->
+        {% for key, path in plot_paths.items %}
+          {% if "categorical_" in key %}
+          <div class="card bg-base-200">
+            <div class="card-body">
+              <h3 class="card-title">{{ key|title|replace:"_":" " }}</h3>
+              <img src="{{ MEDIA_URL }}{{ path }}" alt="{{ key }}" class="w-full rounded">
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="flex flex-wrap gap-4 mt-8">
+    <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left mr-2"></i>
+      Back to Dashboard
+    </a>
+    <a href="{% url 'analytics:column_analysis' uploaded_file.id %}" class="btn btn-primary">
+      <i class="fas fa-columns mr-2"></i>
+      Column Analysis
+    </a>
+    <button onclick="window.print()" class="btn btn-outline">
+      <i class="fas fa-print mr-2"></i>
+      Print Report
+    </button>
+  </div>
+</div>
+
+{% endblock %}
+                    <div class="stat-value text-primary">{{ stats.unique_count }}</div>
+                  </div>
+                  <div class="stat">
+                    <div class="stat-title">Most Frequent</div>
+                    <div class="stat-value text-sm">{{ stats.most_frequent|truncatechars:20 }}</div>
+                    <div class="stat-desc">{{ stats.most_frequent_count }} occurrences</div>
+                  </div>
+                </div>
+                
+                <!-- Top 5 values -->
+                <div class="mt-4">
+                  <h4 class="font-bold mb-2">Top Values:</h4>
+                  {% for value, count in stats.top_5_values.items %}
+                    <div class="flex justify-between items-center mb-1">
+                      <span class="text-sm truncate">{{ value|truncatechars:15 }}</span>
+                      <span class="badge badge-outline">{{ count }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Visualizations -->
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <h2 class="card-title text-2xl mb-4">
+        <i class="fas fa-chart-bar text-purple-500"></i>
+        Data Visualizations
+      </h2>
+      
+      <!-- Visualization Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Histograms -->
+        {% if plot_urls.histograms %}
+          <div class="card bg-base-200">
+            <div class="card-body">
+              <h3 class="card-title">Distribution Plots</h3>
+              <figure class="mt-4">
+                <img src="{{ plot_urls.histograms }}" alt="Histograms" class="w-full rounded-lg">
+              </figure>
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- Box Plots -->
+        {% if plot_urls.boxplots %}
+          <div class="card bg-base-200">
+            <div class="card-body">
+              <h3 class="card-title">Box Plots</h3>
+              <figure class="mt-4">
+                <img src="{{ plot_urls.boxplots }}" alt="Box Plots" class="w-full rounded-lg">
+              </figure>
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- Correlation Heatmap -->
+        {% if plot_urls.correlation_heatmap %}
+          <div class="card bg-base-200 lg:col-span-2">
+            <div class="card-body">
+              <h3 class="card-title">Correlation Heatmap</h3>
+              <figure class="mt-4">
+                <img src="{{ plot_urls.correlation_heatmap }}" alt="Correlation Heatmap" class="w-full rounded-lg">
+              </figure>
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- Missing Values Heatmap -->
+        {% if plot_urls.missing_values_heatmap %}
+          <div class="card bg-base-200 lg:col-span-2">
+            <div class="card-body">
+              <h3 class="card-title">Missing Values Pattern</h3>
+              <figure class="mt-4">
+                <img src="{{ plot_urls.missing_values_heatmap }}" alt="Missing Values Heatmap" class="w-full rounded-lg">
+              </figure>
+            </div>
+          </div>
+        {% endif %}
+
+        <!-- Categorical Plots -->
+        {% if plot_urls.categorical_plots %}
+          {% for plot_url in plot_urls.categorical_plots %}
+            <div class="card bg-base-200">
+              <div class="card-body">
+                <h3 class="card-title">Categorical Distribution</h3>
+                <figure class="mt-4">
+                  <img src="{{ plot_url }}" alt="Categorical Plot" class="w-full rounded-lg">
+                </figure>
+              </div>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Preview -->
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <h2 class="card-title text-2xl mb-4">
+        <i class="fas fa-table text-cyan-500"></i>
+        Data Preview (First 10 Rows)
+      </h2>
+      <div class="overflow-x-auto">
+        <table class="table table-zebra table-compact w-full">
+          <thead>
+            <tr>
+              {% for column in data_preview.columns %}
+                <th class="text-xs">{{ column|truncatechars:15 }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in data_preview.rows %}
+              <tr>
+                {% for cell in row %}
+                  <td class="text-xs">{{ cell|truncatechars:20 }}</td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="alert alert-info mt-4">
+        <i class="fas fa-info-circle"></i>
+        <span>Showing first 10 rows of {{ data_preview.total_rows|floatformat:0 }} total rows</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="flex flex-wrap gap-4 justify-center">
+    <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline">
+      <i class="fas fa-arrow-left mr-2"></i>
+      Back to Dashboard
+    </a>
+    <a href="{% url 'accounts:download_file' uploaded_file.id %}" class="btn btn-primary">
+      <i class="fas fa-download mr-2"></i>
+      Download File
+    </a>
+    <button class="btn btn-secondary" onclick="window.print()">
+      <i class="fas fa-print mr-2"></i>
+      Print Report
+    </button>
+  </div>
+</div>
+
+<!-- Interactive Plots Scripts -->
+{% if interactive_plots %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+  // Add interactive plots here if needed
+  {% for plot_name, plot_json in interactive_plots.items %}
+    // You can add interactive plots here
+  {% endfor %}
+</script>
+{% endif %}
+
+<style>
+  @media print {
+    .btn, .breadcrumbs, .navbar {
+      display: none !important;
+    }
+  }
+</style>
+{% endblock %}
