@@ -7,6 +7,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include(("accounts.urls", "accounts"), namespace="accounts")),  # delegate to accounts app with namespace
     path('analytics/', include(("analytics.urls", "analytics"), namespace="analytics")),  # analytics app URLs with namespace
+
+    #allauth
+    path("accounts/", include("allauth.urls"))
 ]
 
 # Serve media files in development

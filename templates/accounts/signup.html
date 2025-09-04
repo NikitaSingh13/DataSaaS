@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load socialaccount %}
+
 
 {% block title %}Sign Up - DataSaaS{% endblock %}
 
@@ -164,19 +166,21 @@
       </form>
 
       <!-- Divider - COMMENTED OUT SOCIAL LOGIN -->
-      <!-- <div class="divider">OR</div> -->
+      <div class="divider">OR</div>
 
       <!-- Social Signup - COMMENTED OUT ALLAUTH -->
-      <!-- <div class="space-y-3">
-        <button class="btn btn-outline btn-block">
-          <i class="fab fa-google mr-2"></i>
-          Sign up with Google
-        </button>
-        <button class="btn btn-outline btn-block">
+      <div class="space-y-3">
+          <a href="{% provider_login_url 'google' %}" class="btn btn-outline btn-block flex items-center justify-center">
+              <i class="fab fa-google mr-2"></i>
+              Sign up with Google
+          </a>
+
+      
+        {% comment %} <button class="btn btn-outline btn-block">
           <i class="fab fa-github mr-2"></i>
           Sign up with GitHub
-        </button>
-      </div> -->
+        </button> {% endcomment %}
+      </div>
 
       <!-- Login Link -->
       <div class="text-center mt-6">

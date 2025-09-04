@@ -55,18 +55,27 @@ INSTALLED_APPS = [
 
     # Providers (you can add more later) - COMMENTED OUT ALLAUTH
     'allauth.socialaccount.providers.google',
-    'allauth.socialaccount.providers.github',
+]
+
+AUTHENTICATION_BACKENDS = [
+#     ...
+#     # # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+
+#     # `allauth` specific authentication methods, such as login by email
+    'allauth.account.auth_backends.AuthenticationBackend',
+#     ...
 ]
 
 SOCIALACCOUNT_PROVIDERS = {
-    'google' :{
-        'APP' :{
-            'client_id':config('OAUTH_GOOGLE_CLINET_ID'),
-            'secret':config('OAUTH_GOOGLE_SECRET'),
-            'key':''
-        },
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        # Remove APP completely
+        # 'APP': { 'client_id': ..., 'secret': ..., 'key': '' } 
     },
 }
+
 
 SITE_ID = 1 #- COMMENTED OUT ALLAUTH SITE ID
 
