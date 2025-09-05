@@ -96,21 +96,13 @@ TAILWIND_APP_NAME = 'theme'
 INTERNAL_IPS = ['127.0.0.1']
 
 # npm path
+# ✅ Removed Windows-specific path; Railway uses system Node.js
 # NPM_BIN_PATH = "C:/Program Files/nodejs/npm.cmd"
-
-#during deployement
-import os
-
-if os.name == "nt":  # Windows
-    NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"
-else:  # Linux / Railway
-    NPM_BIN_PATH = "/usr/bin/npm"
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
 
-    #whenever i set  debug = false and aloowed hosts = ['*'] so to solve that 
+    #whenever i set debug = false and allowed hosts = ['*'] so to solve that 
     "whitenoise.middleware.WhiteNoiseMiddleware",  # ✅ must be right after SecurityMiddleware
 
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -129,7 +121,7 @@ ROOT_URLCONF = 'DataSaaS.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': ['templates'],  # Make sure this folder exists at project root
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -215,7 +207,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = 'home'
-
 
 #for production
 TAILWIND_DEV_MODE = False  # False for production, True for dev
