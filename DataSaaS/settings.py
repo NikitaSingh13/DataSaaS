@@ -96,7 +96,16 @@ TAILWIND_APP_NAME = 'theme'
 INTERNAL_IPS = ['127.0.0.1']
 
 # npm path
-NPM_BIN_PATH = "C:/Program Files/nodejs/npm.cmd"
+# NPM_BIN_PATH = "C:/Program Files/nodejs/npm.cmd"
+
+#during deployement
+import os
+
+if os.name == "nt":  # Windows
+    NPM_BIN_PATH = r"C:\Program Files\nodejs\npm.cmd"
+else:  # Linux / Railway
+    NPM_BIN_PATH = "/usr/bin/npm"
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
