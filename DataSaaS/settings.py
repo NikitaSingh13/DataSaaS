@@ -29,7 +29,7 @@ SECRET_KEY = config("SECRET_KEY", default=os.environ.get("SECRET_KEY", "fallback
 DEBUG = config("DEBUG", default=os.environ.get("DEBUG", False), cast=bool)
 
 ALLOWED_HOSTS = [
-    "datasaa.up.railway.app",
+    "datasaas.up.railway.app",
     "localhost",
     "127.0.0.1",
 ]
