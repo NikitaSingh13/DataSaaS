@@ -23,12 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = config("SECRET_KEY", default=os.environ.get("SECRET_KEY", "fallback-secret"))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config("DEBUG", default=os.environ.get("DEBUG", False), cast=bool)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['datasaas.onrender.com']
 
 
 # Application definition
@@ -59,15 +59,14 @@ INSTALLED_APPS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-#     ...
-#     # # Needed to login by username in Django admin, regardless of `allauth`
+    # Needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
 
-#     # `allauth` specific authentication methods, such as login by email
+    # `allauth` specific authentication methods, such as login by email
     'allauth.account.auth_backends.AuthenticationBackend',
-#     ...
 ]
 
+# ================= OAuth (Google) =================
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['profile', 'email'],
@@ -77,19 +76,29 @@ SOCIALACCOUNT_PROVIDERS = {
     },
 }
 
+# Read Google OAuth credentials from environment variables
+OAUTH_GOOGLE_CLIENT_ID = config(
+    "OAUTH_GOOGLE_CLIENT_ID",
+    default=os.environ.get("OAUTH_GOOGLE_CLIENT_ID", "")
+)
+OAUTH_GOOGLE_SECRET = config(
+    "OAUTH_GOOGLE_SECRET",
+    default=os.environ.get("OAUTH_GOOGLE_SECRET", "")
+)
 
-SITE_ID = 1 #- COMMENTED OUT ALLAUTH SITE ID
+SITE_ID = 1  # - COMMENTED OUT ALLAUTH SITE ID
 
 TAILWIND_APP_NAME = 'theme'
 INTERNAL_IPS = ['127.0.0.1']
 
 # npm path
-NPM_BIN_PATH = "C:/Program Files/nodejs/npm.cmd"
+# ✅ Removed Windows-specific path; Railway uses system Node.js
+# NPM_BIN_PATH = "C:/Program Files/nodejs/npm.cmd"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
 
-    #whenever i set  debug = false and aloowed hosts = ['*'] so to solve that 
+    #whenever i set debug = false and allowed hosts = ['*'] so to solve that 
     "whitenoise.middleware.WhiteNoiseMiddleware",  # ✅ must be right after SecurityMiddleware
 
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -108,7 +117,7 @@ ROOT_URLCONF = 'DataSaaS.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['templates'],
+        'DIRS': ['templates'],  # Make sure this folder exists at project root
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -194,3 +203,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = 'home'
+
+#for production
+TAILWIND_DEV_MODE = False  # False for production, True for dev
+
+
+#just checking deployement
