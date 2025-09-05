@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY", default=os.environ.get("SECRET_KEY", "fallback-secret"))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config("DEBUG", default=os.environ.get("DEBUG", True), cast=bool)
+DEBUG = config("DEBUG", default=os.environ.get("DEBUG", False), cast=bool)
 
 ALLOWED_HOSTS = ['*']
 
