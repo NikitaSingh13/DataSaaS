@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
+from django.conf import settings  # ✅ Import settings for MEDIA_URL
 from accounts.models import UploadedFile, Insight
 from .utils.eda_utils import read_file, get_summary, generate_plots
 import json
@@ -47,8 +48,10 @@ def eda_view(request, file_id):
             'uploaded_file': uploaded_file,
             'summary': summary,
             'plots': [{'name': name.replace('_', ' ').title(), 'path': path} for name, path in plot_paths.items()],
+            'plot_paths': plot_paths,  # ✅ Add raw plot paths
             'df_head': df.head().to_html(classes='table table-striped table-sm', table_id='data-preview'),
-            'insight': insight
+            'insight': insight,
+            'MEDIA_URL': settings.MEDIA_URL,  # ✅ Explicitly pass MEDIA_URL for production
         }
         
         return render(request, 'analytics/eda_simple.html', context)

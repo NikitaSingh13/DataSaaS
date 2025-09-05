@@ -28,7 +28,7 @@ SECRET_KEY = config("SECRET_KEY", default=os.environ.get("SECRET_KEY", "fallback
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=os.environ.get("DEBUG", False), cast=bool)
 
-ALLOWED_HOSTS = ['datasaas.onrender.com']
+ALLOWED_HOSTS = ['datasaas.onrender.com', '127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -100,6 +100,9 @@ MIDDLEWARE = [
 
     #whenever i set debug = false and allowed hosts = ['*'] so to solve that 
     "whitenoise.middleware.WhiteNoiseMiddleware",  # ✅ must be right after SecurityMiddleware
+    
+    # ✅ Custom middleware to serve media files in production
+    'DataSaaS.middleware.MediaFilesMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -180,19 +183,28 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-# ✅ Added for production (Tailwind + Whitenoise)
-STATIC_ROOT = BASE_DIR / "staticfiles"  # where collectstatic will put files
+# ✅ Production static files configuration
+STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Media files (User uploaded files)
-# https://docs.djangoproject.com/en/5.2/topics/files/
+# Media files (User uploaded files and generated plots)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# ✅ Configure WhiteNoise to serve media files in production
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
+
+# ✅ Allow WhiteNoise to serve media files
+if not DEBUG:
+    # In production, use WhiteNoise to serve both static and media files
+    WHITENOISE_ROOT = MEDIA_ROOT
+    WHITENOISE_INDEX_FILE = False
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

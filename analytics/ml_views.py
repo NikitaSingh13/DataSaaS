@@ -353,7 +353,8 @@ def ml_results(request, job_id):
                 'name': ml_job.best_model_name,
                 'score': ml_job.best_model_score
             },
-            'training_time': (ml_job.completed_at - ml_job.created_at).total_seconds() if ml_job.completed_at else None
+            'training_time': (ml_job.completed_at - ml_job.created_at).total_seconds() if ml_job.completed_at else None,
+            'MEDIA_URL': settings.MEDIA_URL,  # ✅ Add MEDIA_URL for production
         }
         
         return render(request, 'analytics/ml_results.html', context)

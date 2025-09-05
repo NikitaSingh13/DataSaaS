@@ -10,6 +10,7 @@ from django.conf import settings
 import warnings
 warnings.filterwarnings('ignore')
 
+
 # Set matplotlib backend for server environments
 plt.switch_backend('Agg')
 
