@@ -210,3 +210,6 @@ LOGOUT_REDIRECT_URL = 'home'
 
 #for production
 TAILWIND_DEV_MODE = False  # False for production, True for dev
+
+
+#just checking deployement
