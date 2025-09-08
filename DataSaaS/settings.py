@@ -59,20 +59,32 @@ INSTALLED_APPS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    # Needed to login by username in Django admin, regardless of `allauth`
+    # Django's default authentication backend (for custom login/signup)
     'django.contrib.auth.backends.ModelBackend',
 
-    # `allauth` specific authentication methods, such as login by email
+    # Allauth authentication backend (for Google OAuth)
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# ================= OAuth (Google) =================
+# ================= Django Allauth Configuration =================
+SITE_ID = 1
+
+# Allauth settings
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # Don't require email verification
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'  # Allow login with username or email
+ACCOUNT_SIGNUP_REDIRECT_URL = '/dashboard/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+ACCOUNT_LOGOUT_REDIRECT_URL = '/'
+
+# Social Account settings
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': ['profile', 'email'],
         'AUTH_PARAMS': {'access_type': 'online'},
-        # Remove APP completely
-        # 'APP': { 'client_id': ..., 'secret': ..., 'key': '' } 
+        'METHOD': 'oauth2',
+        'VERIFIED_EMAIL': True,
     },
 }
 
@@ -82,11 +94,9 @@ OAUTH_GOOGLE_CLIENT_ID = config(
     default=os.environ.get("OAUTH_GOOGLE_CLIENT_ID", "")
 )
 OAUTH_GOOGLE_SECRET = config(
-    "OAUTH_GOOGLE_SECRET",
+    "OAUTH_GOOGLE_SECRET", 
     default=os.environ.get("OAUTH_GOOGLE_SECRET", "")
 )
-
-SITE_ID = 1  # - COMMENTED OUT ALLAUTH SITE ID
 
 TAILWIND_APP_NAME = 'theme'
 INTERNAL_IPS = ['127.0.0.1']

@@ -44,7 +44,8 @@ def login_view(request):
                 user = None
         
         if user is not None:
-            login(request, user)
+            # Use Django's ModelBackend for custom login
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             # Redirect to next parameter if available, otherwise dashboard
             next_url = request.GET.get('next', 'accounts:dashboard')
             return redirect(next_url)
@@ -108,8 +109,8 @@ def signup_view(request):
                 last_name=last_name
             )
             
-            # Login the user automatically
-            login(request, user)
+            # Login the user automatically using Django's ModelBackend
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, 'Account created successfully!')
             return redirect('accounts:dashboard')
             
