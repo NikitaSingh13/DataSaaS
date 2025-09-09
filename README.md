@@ -1,4 +1,4 @@
-# DataSaaS - Data Analytics & ML Platform
+#  DataSaaS- Automated EDA & ML Platform
 
 ![DataSaaS](https://img.shields.io/badge/Django-5.2.5-green) ![Python](https://img.shields.io/badge/Python-3.13-blue) ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-Latest-cyan)
 
